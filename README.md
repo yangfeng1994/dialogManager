@@ -50,18 +50,19 @@ dialogManager.addLifecycle(this) //实现生命周期监听
 
 ## 对activity或者fragment回调接口中
 ```
+ //添加lifecycle 设置生命周期监听
  override fun getControllerLifecycle(): Lifecycle {
         return lifecycle
     }
-
+    //添加类名，对不同fragment或者activity设置唯一性
     override fun getControllerClass(): Class<*> {
         return this.javaClass
     }
-
+    //设置fragmentManager
     override fun getControllerFragmentManager(): FragmentManager {
         return supportFragmentManager
     }
-
+    //移除监听
     override fun onDestroy() {
         super.onDestroy()
         dialogManager.removeLifecycle(this)
@@ -69,25 +70,6 @@ dialogManager.addLifecycle(this) //实现生命周期监听
 
 ```
 
-```
- override fun getControllerLifecycle(): Lifecycle {
-        return lifecycle
-    }
-
-    override fun getControllerClass(): Class<*> {
-        return this.javaClass
-    }
-
-    override fun getControllerFragmentManager(): FragmentManager {
-        return supportFragmentManager
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        dialogManager.removeLifecycle(this)
-    }
-
-```
 
 addQueue 添加您的弹窗
 ```
