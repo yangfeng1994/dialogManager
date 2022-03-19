@@ -24,8 +24,8 @@ class FistActivity : AppCompatActivity(), ActivityController {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         dialogManager.removeLifecycle(this)
+        super.onDestroy()
         mHandler.removeCallbacksAndMessages(null)
     }
 

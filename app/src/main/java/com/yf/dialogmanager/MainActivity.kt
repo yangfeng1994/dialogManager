@@ -18,11 +18,19 @@ class MainActivity : AppCompatActivity(), ActivityController {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         dialogManager.addLifecycle(this)
+//        addFragment()
         showDialog()
         mBTStart.setOnClickListener {
             val intent = Intent(this, FistActivity::class.java)
             startActivity(intent)
         }
+
+    }
+
+    private fun addFragment() {
+        val beginTransaction = supportFragmentManager.beginTransaction()
+        beginTransaction.add(R.id.mFMControl, MainFragment())
+        beginTransaction.commit()
     }
 
     override fun getControllerLifecycle(): Lifecycle {
@@ -38,15 +46,15 @@ class MainActivity : AppCompatActivity(), ActivityController {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         dialogManager.removeLifecycle(this)
+        super.onDestroy()
     }
 
     private fun showDialog() {
         val mHandler = Handler(Looper.getMainLooper())
         mHandler.postDelayed({
             val mFistDialogFragment = FistDialog(this)
-            dialogManager.addQueue(0,false, mFistDialogFragment, this)
+            dialogManager.addQueue(0, false, mFistDialogFragment, this)
         }, 2000)
         mHandler.postDelayed({
             val mFistDialogFragment = FistDialogFragment.newInstance(2)

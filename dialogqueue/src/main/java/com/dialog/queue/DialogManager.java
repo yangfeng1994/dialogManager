@@ -51,7 +51,7 @@ public class DialogManager {
      * @param activityController
      */
     public void removeLifecycle(ActivityController activityController) {
-        mLifeQueue.remove(activityController);
+        mLifeQueue.remove(activityController.getControllerClass().getSimpleName());
     }
 
     /**

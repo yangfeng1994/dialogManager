@@ -1,15 +1,13 @@
 package com.yf.dialogmanager
 
-import android.content.DialogInterface
+import android.widget.Button
 import android.widget.TextView
-import androidx.fragment.app.FragmentManager
 import com.dialog.queue.DialogController
-import com.dialog.queue.DialogDismissCallback
 
 class FistDialogFragment : BaseDialogFragment(), DialogController {
-    var callback: DialogDismissCallback? = null
     var number: Int = 1
     val mTVNumberDialog by lazy { view?.findViewById<TextView>(R.id.mTVNumberDialog) }
+    val mBTNFinish by lazy { view?.findViewById<Button>(R.id.mBTNFinish) }
 
     companion object {
         fun newInstance(number: Int = 1) = FistDialogFragment().apply {
@@ -22,19 +20,8 @@ class FistDialogFragment : BaseDialogFragment(), DialogController {
 
     override fun onInitFastData() {
         mTVNumberDialog?.text = "第${number}个DialogFragment弹窗"
+        mBTNFinish?.setOnClickListener { activity?.finish() }
     }
 
-    override fun doShow(fragmentManager: FragmentManager) {
-        show(fragmentManager, javaClass.simpleName)
-    }
-
-    override fun doDismiss(callback: DialogDismissCallback?) {
-        this.callback = callback
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        callback?.onDismiss()
-    }
 
 }

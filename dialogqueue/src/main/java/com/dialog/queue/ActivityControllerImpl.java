@@ -1,36 +1,39 @@
 package com.dialog.queue;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
+import android.os.Message;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 public class ActivityControllerImpl implements DefaultLifecycleObserver, ActivityController, DialogDismissCallback {
 
     private Lifecycle.State mState;
-
+    private Field mDismissMessageField;
     /**
-     * 判断当前是否显示
+     * 当前显示的弹窗
      */
-    private boolean isShow;
-
+    private DialogController showDialog;
     private boolean autoExec;
     /**
      * 添加到队列中的dialog，等待执行
      */
     private ArrayList<Pair<Integer, DialogController>> mDialogQueue = new ArrayList();
 
-    /**
-     * 已显示的dialog 用来关闭界面，移除监听的
-     */
-    private ArrayList<Pair<Integer, DialogController>> mExecutedDialogQueue = new ArrayList();
     private Lifecycle lifecycle;
     private FragmentManager mFragmentManager;
+    private FragmentManager.FragmentLifecycleCallbacks mFragmentLifecycleCallbacks;
 
     public void addObserver(Lifecycle lifecycle) {
         this.lifecycle = lifecycle;
@@ -75,8 +78,14 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
     @Override
     public void onDestroy(@NonNull LifecycleOwner owner) {
         mState = owner.getLifecycle().getCurrentState();
-        cleanDialogCallBack(mDialogQueue);
-        cleanDialogCallBack(mExecutedDialogQueue);
+        mDialogQueue.clear();
+        lifecycle.removeObserver(this);
+        if (null != mFragmentLifecycleCallbacks && null != mFragmentManager) {
+            mFragmentManager.unregisterFragmentLifecycleCallbacks(mFragmentLifecycleCallbacks);
+            mFragmentLifecycleCallbacks = null;
+        }
+        showDialog = null;
+        mDialogQueue = null;
     }
 
     @Override
@@ -96,6 +105,7 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
 
     public void addQueue(int priority, boolean execution, DialogController dialogController, FragmentManager fragmentManager) {
         this.mFragmentManager = fragmentManager;
+        hookDialogFragmentDismiss();
         mDialogQueue.add(0, new Pair(priority, dialogController));
         if (mState == Lifecycle.State.RESUMED) {
             if (execution) {
@@ -112,24 +122,12 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
         execute();
     }
 
-
-    /**
-     * 移除dialog的监听
-     */
-    private void cleanDialogCallBack(ArrayList<Pair<Integer, DialogController>> dialogQueue) {
-        for (Pair<Integer, DialogController> dialogController : dialogQueue) {
-            DialogController dialog = dialogController.second;
-            dialog.doDismiss(null);
-        }
-        dialogQueue.clear();
-    }
-
     /**
      * 显示弹窗
      * priority 越小，优先级越高
      */
     private void execute() {
-        if (isShow) return;
+        if (null != showDialog) return;
         int size = mDialogQueue.size();
         int priority = 0;
         int index = 0;
@@ -143,11 +141,65 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
         }
         Pair<Integer, DialogController> dialogController = mDialogQueue.get(index);
         DialogController dialog = dialogController.second;
-        dialog.doShow(getControllerFragmentManager());
-        dialog.doDismiss(this);
+        FragmentManager controllerFragmentManager = getControllerFragmentManager();
+        if (dialog instanceof DialogFragment) {
+            DialogFragment dialogFragment = (DialogFragment) dialog;
+            dialogFragment.show(controllerFragmentManager, controllerFragmentManager.getClass().getSimpleName());
+        } else if (dialog instanceof Dialog) {
+            Dialog dialog1 = (Dialog) dialog;
+            dialog1.show();
+            hookDialogDismiss(dialog1);
+        }
         mDialogQueue.remove(dialogController);
-        mExecutedDialogQueue.add(dialogController);
-        isShow = true;
+        showDialog = dialog;
+    }
+
+    private void hookDialogFragmentDismiss() {
+        if (null != mFragmentLifecycleCallbacks) return;
+        mFragmentLifecycleCallbacks = new FragmentManager.FragmentLifecycleCallbacks() {
+            @Override
+            public void onFragmentDestroyed(@NonNull FragmentManager fm, @NonNull Fragment f) {
+                super.onFragmentDestroyed(fm, f);
+                if (null == showDialog) return;
+                if (showDialog instanceof DialogFragment) {
+                    if (showDialog == f) {
+                        onDismiss();
+                    }
+                }
+            }
+        };
+        mFragmentManager.registerFragmentLifecycleCallbacks(mFragmentLifecycleCallbacks, true);
+    }
+
+
+    /**
+     * hookDialog的dismiss方法
+     *
+     * @param dialog
+     */
+    private void hookDialogDismiss(Dialog dialog) {
+        if (null == mDismissMessageField) {
+            mDismissMessageField = HookUtils.getDeclaredField(Dialog.class, "mDismissMessage");
+        }
+        DialogInterface.OnDismissListener oldListener = null;
+        if (null != mDismissMessageField) {
+            Object mDismissMessage = HookUtils.fieldGetValue(mDismissMessageField, dialog);
+            if (null != mDismissMessage) {
+                if (mDismissMessage instanceof Message) {
+                    Object listener = ((Message) mDismissMessage).obj;
+                    if (null != listener) {
+                        oldListener = ((DialogInterface.OnDismissListener) listener);
+                    }
+                }
+            }
+        }
+        DialogInterface.OnDismissListener finalOldListener = oldListener;
+        dialog.setOnDismissListener(dialog1 -> {
+            onDismiss();
+            if (null != finalOldListener) {
+                finalOldListener.onDismiss(dialog1);
+            }
+        });
     }
 
     public void execution() {
@@ -161,7 +213,7 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
      */
     @Override
     public void onDismiss() {
-        isShow = false;
+        showDialog = null;
         if (autoExec) {
             execution();
         }
