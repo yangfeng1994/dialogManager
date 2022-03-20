@@ -37,7 +37,9 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
 
     public void addObserver(Lifecycle lifecycle) {
         this.lifecycle = lifecycle;
-        lifecycle.addObserver(this);
+        if (null != lifecycle) {
+            lifecycle.addObserver(this);
+        }
     }
 
     /**
@@ -80,7 +82,9 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
         mState = owner.getLifecycle().getCurrentState();
         mDialogQueue.clear();
         mDialogQueue = null;
-        lifecycle.removeObserver(this);
+        if (null != lifecycle) {
+            lifecycle.removeObserver(this);
+        }
         if (null != mFragmentLifecycleCallbacks && null != mFragmentManager) {
             mFragmentManager.unregisterFragmentLifecycleCallbacks(mFragmentLifecycleCallbacks);
         }
