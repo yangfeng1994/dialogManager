@@ -1,6 +1,8 @@
 package com.dialog.queue;
 
 
+import androidx.lifecycle.Lifecycle;
+
 import java.util.HashMap;
 
 /**
@@ -23,7 +25,6 @@ public class DialogManager {
     private HashMap<String, ActivityController> mLifeQueue = new HashMap<>();
 
     /**
-     *
      * @param activityController 添加activity的生命周期
      * @return
      */
@@ -51,7 +52,16 @@ public class DialogManager {
      * @param activityController
      */
     public void removeLifecycle(ActivityController activityController) {
-        mLifeQueue.remove(activityController.getControllerClass().getSimpleName());
+        String simpleName = activityController.getControllerClass().getSimpleName();
+        ActivityControllerImpl activityControllerImpl = (ActivityControllerImpl) mLifeQueue.remove(simpleName);
+        if (null != activityControllerImpl) {
+            Lifecycle controllerLifecycle = activityControllerImpl.getControllerLifecycle();
+            if (null != controllerLifecycle) {
+                controllerLifecycle.removeObserver(activityControllerImpl);
+            }
+            controllerLifecycle = null;
+        }
+        activityControllerImpl = null;
     }
 
     /**
@@ -91,6 +101,15 @@ public class DialogManager {
         if (null != mActivityControllerImpl) {
             mActivityControllerImpl.execution();
         }
+    }
+
+    /**
+     * 释放单例
+     */
+    public void release() {
+        mLifeQueue.clear();
+        mLifeQueue = null;
+        mInstance = null;
     }
 
 }

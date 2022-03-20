@@ -79,13 +79,13 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
     public void onDestroy(@NonNull LifecycleOwner owner) {
         mState = owner.getLifecycle().getCurrentState();
         mDialogQueue.clear();
+        mDialogQueue = null;
         lifecycle.removeObserver(this);
         if (null != mFragmentLifecycleCallbacks && null != mFragmentManager) {
             mFragmentManager.unregisterFragmentLifecycleCallbacks(mFragmentLifecycleCallbacks);
-            mFragmentLifecycleCallbacks = null;
         }
+        mFragmentLifecycleCallbacks = null;
         showDialog = null;
-        mDialogQueue = null;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
     private void execute() {
         if (null != showDialog) return;
         int size = mDialogQueue.size();
-        int priority = 0;
+        int priority = Integer.MAX_VALUE;
         int index = 0;
         for (int i = 0; i < size; i++) {
             Pair<Integer, DialogController> item = mDialogQueue.get(i);
@@ -199,6 +199,7 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
             if (null != finalOldListener) {
                 finalOldListener.onDismiss(dialog1);
             }
+            dialog.setOnDismissListener(null);
         });
     }
 

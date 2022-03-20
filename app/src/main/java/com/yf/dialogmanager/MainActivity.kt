@@ -14,12 +14,13 @@ import com.dialog.queue.DialogManager
 class MainActivity : AppCompatActivity(), ActivityController {
     val dialogManager = DialogManager.getInstance()
     val mBTStart by lazy { findViewById<Button>(R.id.mBTStart) }
+    val mHandler by lazy { Handler(Looper.getMainLooper()) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         dialogManager.addLifecycle(this)
 //        addFragment()
-        showDialog()
+//        showDialog()
         mBTStart.setOnClickListener {
             val intent = Intent(this, FistActivity::class.java)
             startActivity(intent)
@@ -46,12 +47,17 @@ class MainActivity : AppCompatActivity(), ActivityController {
     }
 
     override fun onDestroy() {
-        dialogManager.removeLifecycle(this)
         super.onDestroy()
+        mHandler.removeCallbacksAndMessages(null)
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        dialogManager.removeLifecycle(this)
+        dialogManager.release()
     }
 
     private fun showDialog() {
-        val mHandler = Handler(Looper.getMainLooper())
         mHandler.postDelayed({
             val mFistDialogFragment = FistDialog(this)
             dialogManager.addQueue(0, false, mFistDialogFragment, this)
@@ -59,6 +65,10 @@ class MainActivity : AppCompatActivity(), ActivityController {
         mHandler.postDelayed({
             val mFistDialogFragment = FistDialogFragment.newInstance(2)
             dialogManager.addQueue(1, mFistDialogFragment, this)
+        }, 3100)
+        mHandler.postDelayed({
+            val mFistDialogFragment = FistDialog(this)
+            dialogManager.addQueue(2, false, mFistDialogFragment, this)
         }, 3100)
     }
 
