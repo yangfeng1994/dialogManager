@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity(), ActivityController {
         setContentView(R.layout.activity_main)
         dialogManager.addLifecycle(this)
 //        addFragment()
-//        showDialog()
+        showDialog()
         mBTStart.setOnClickListener {
             val intent = Intent(this, FistActivity::class.java)
             startActivity(intent)

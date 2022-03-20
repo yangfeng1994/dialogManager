@@ -3,6 +3,7 @@ package com.dialog.queue;
 
 import androidx.lifecycle.Lifecycle;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 /**
@@ -22,14 +23,14 @@ public class DialogManager {
         return mInstance;
     }
 
-    private HashMap<String, ActivityController> mLifeQueue = new HashMap<>();
+    private HashMap<String, WeakReference<ActivityController>> mLifeQueue = new HashMap<>();
 
     /**
      * @param activityController 添加activity的生命周期
      * @return
      */
-    public ActivityControllerImpl addLifecycle(ActivityController activityController) {
-        ActivityControllerImpl activityControllerImpl = addLifecycle(activityController, true);
+    public WeakReference<ActivityController> addLifecycle(ActivityController activityController) {
+        WeakReference<ActivityController> activityControllerImpl = addLifecycle(activityController, true);
         return activityControllerImpl;
     }
 
@@ -38,12 +39,13 @@ public class DialogManager {
      * @param autoExec           结束后是否是自动执行
      * @return
      */
-    public ActivityControllerImpl addLifecycle(ActivityController activityController, boolean autoExec) {
+    public WeakReference<ActivityController> addLifecycle(ActivityController activityController, boolean autoExec) {
         ActivityControllerImpl activityControllerImpl = new ActivityControllerImpl();
         activityControllerImpl.addObserver(activityController.getControllerLifecycle());
         activityControllerImpl.setAutoExec(autoExec);
-        mLifeQueue.put(activityController.getControllerClass().getSimpleName(), activityControllerImpl);
-        return activityControllerImpl;
+        WeakReference<ActivityController> activityControllerWeakReference = new WeakReference<>(activityControllerImpl);
+        mLifeQueue.put(activityController.getControllerClass().getSimpleName(), activityControllerWeakReference);
+        return activityControllerWeakReference;
     }
 
     /**
@@ -53,14 +55,14 @@ public class DialogManager {
      */
     public void removeLifecycle(ActivityController activityController) {
         String simpleName = activityController.getControllerClass().getSimpleName();
-        ActivityControllerImpl activityControllerImpl = (ActivityControllerImpl) mLifeQueue.remove(simpleName);
-        if (null != activityControllerImpl) {
-            Lifecycle controllerLifecycle = activityControllerImpl.getControllerLifecycle();
-            if (null != controllerLifecycle) {
-                controllerLifecycle.removeObserver(activityControllerImpl);
-            }
-            controllerLifecycle = null;
-        }
+        WeakReference<ActivityController> activityControllerWeakReference = mLifeQueue.remove(simpleName);
+        if (null == activityControllerWeakReference) return;
+        ActivityControllerImpl activityControllerImpl = (ActivityControllerImpl) activityControllerWeakReference.get();
+        if (null == activityControllerImpl) return;
+        Lifecycle controllerLifecycle = activityControllerImpl.getControllerLifecycle();
+        if (null == controllerLifecycle) return;
+        controllerLifecycle.removeObserver(activityControllerImpl);
+        controllerLifecycle = null;
         activityControllerImpl = null;
     }
 
@@ -84,10 +86,11 @@ public class DialogManager {
      * @param activityController activity的控制类
      */
     public void addQueue(int priority, boolean execution, DialogController dialogController, ActivityController activityController) {
-        ActivityControllerImpl mActivityControllerImpl = (ActivityControllerImpl) mLifeQueue.get(activityController.getControllerClass().getSimpleName());
-        if (null == mActivityControllerImpl) {
-            mActivityControllerImpl = addLifecycle(activityController);
+        WeakReference<ActivityController> activityControllerWeakReference = mLifeQueue.get(activityController.getControllerClass().getSimpleName());
+        if (null == activityControllerWeakReference) {
+            activityControllerWeakReference = addLifecycle(activityController);
         }
+        ActivityControllerImpl mActivityControllerImpl = (ActivityControllerImpl) activityControllerWeakReference.get();
         mActivityControllerImpl.addQueue(priority, execution, dialogController, activityController.getControllerFragmentManager());
     }
 
@@ -97,7 +100,9 @@ public class DialogManager {
      * @param activityController
      */
     public void execution(ActivityController activityController) {
-        ActivityControllerImpl mActivityControllerImpl = (ActivityControllerImpl) mLifeQueue.get(activityController.getControllerClass().getSimpleName());
+        WeakReference<ActivityController> activityControllerWeakReference = mLifeQueue.get(activityController.getControllerClass().getSimpleName());
+        if (null == activityControllerWeakReference) return;
+        ActivityControllerImpl mActivityControllerImpl = (ActivityControllerImpl) activityControllerWeakReference.get();
         if (null != mActivityControllerImpl) {
             mActivityControllerImpl.execution();
         }
