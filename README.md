@@ -78,3 +78,8 @@ dialogManager.addQueue(0,false, mFistDialogFragment, this)
 
 下载demo更能更好的帮助您使用
 
+## 感谢
+- [DialogChainHelper](https://github.com/NByida/DialogChainHelper )
+提供的反射思想，让项目调用更方便
+
+
