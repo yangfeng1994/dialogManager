@@ -20,26 +20,6 @@ dependencies {
 ```
 第三步
 将您的DialogFragment 或者dialog 实现 DialogController 接口
-然后在 doShow 实现此方法
-```
-override fun doShow(fragmentManager: FragmentManager) {
-        show(fragmentManager, javaClass.simpleName)
-    }
-
-```
-
-```
- override fun doDismiss(callback: DialogDismissCallback?) {
-        this.callback = callback
-    }
-    将 callback 接口设为变量
-    在 onDismiss 调用
-     override fun onDismiss(dialog: DialogInterface) {
-            super.onDismiss(dialog)
-            callback?.onDismiss()
-        }
-
-```
 
 ## 使用时 ，在您的 Activity 或者Fragment中创建 DialogManager 单例
 
