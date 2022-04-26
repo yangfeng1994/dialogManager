@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Button
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Lifecycle
@@ -14,16 +15,26 @@ import com.dialog.queue.DialogManager
 class MainActivity : AppCompatActivity(), ActivityController {
     val dialogManager = DialogManager.getInstance()
     val mBTStart by lazy { findViewById<Button>(R.id.mBTStart) }
+    val mBTAdd by lazy { findViewById<Button>(R.id.mBTAdd) }
     val mHandler by lazy { Handler(Looper.getMainLooper()) }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         dialogManager.addLifecycle(this)
 //        addFragment()
-        showDialog()
+//        showDialog()
         mBTStart.setOnClickListener {
             val intent = Intent(this, FistActivity::class.java)
             startActivity(intent)
+        }
+        mBTAdd.setOnClickListener {
+            Log.e("yyyyy", "点击弹窗弹出")
+            val mFistDialogFragment = FistDialog(this)
+            dialogManager.addQueue(0,  mFistDialogFragment, this)
+            mHandler.postDelayed({
+                val mFistDialogFragment = FistDialog(this)
+                dialogManager.addQueue(0,  mFistDialogFragment, this)
+            }, 10)
         }
 
     }

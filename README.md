@@ -56,6 +56,13 @@ addQueue 添加您的弹窗
 dialogManager.addQueue(0,false, mFistDialogFragment, this)
 ```
 
+设置弹窗唯一性
+```
+getTagName()  设置弹窗名
+unique() true 唯一 false 不唯一
+
+```
+
 下载demo更能更好的帮助您使用
 
 ## 感谢

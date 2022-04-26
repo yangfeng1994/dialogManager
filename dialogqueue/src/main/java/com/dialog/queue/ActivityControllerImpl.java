@@ -3,7 +3,6 @@ package com.dialog.queue;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Message;
-import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -110,7 +109,41 @@ public class ActivityControllerImpl implements DefaultLifecycleObserver, Activit
     public void addQueue(int priority, boolean execution, DialogController dialogController, FragmentManager fragmentManager) {
         this.mFragmentManager = fragmentManager;
         hookDialogFragmentDismiss();
+        String tagName = dialogController.getTagName();
+        boolean unique = dialogController.unique();
+        if (unique) {
+            if (null != showDialog) {
+                String showTagName = showDialog.getTagName();
+                boolean showUnique = showDialog.unique();
+                if (showUnique && null != showTagName && null != tagName) {
+                    if (tagName.equals(showTagName)) {
+                        extracted(execution);
+                        return;
+                    }
+                }
+            }
+            for (Pair<Integer, DialogController> item : mDialogQueue) {
+                DialogController controller = item.second;
+                String queueTagName = controller.getTagName();
+                boolean queueUnique = dialogController.unique();
+                if (queueUnique && null != queueTagName && null != tagName) {
+                    if (tagName.equals(queueTagName)) {
+                        extracted(execution);
+                        return;
+                    }
+                }
+            }
+        }
         mDialogQueue.add(0, new Pair(priority, dialogController));
+        extracted(execution);
+    }
+
+    /**
+     * 根據生命周期判斷 是否有可以执行的弹窗
+     *
+     * @param execution 是否是立即执行
+     */
+    private void extracted(boolean execution) {
         if (mState == Lifecycle.State.RESUMED) {
             if (execution) {
                 execute();

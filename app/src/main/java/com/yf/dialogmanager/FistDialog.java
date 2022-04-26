@@ -31,4 +31,14 @@ public class FistDialog extends Dialog implements DialogController, DialogInterf
     @Override
     public void onDismiss(DialogInterface dialog) {
     }
+
+    @Override
+    public String getTagName() {
+        return "FistRDialog";
+    }
+
+    @Override
+    public boolean unique() {
+        return true;
+    }
 }
