@@ -15,7 +15,7 @@ allprojects {
 
 ```
 dependencies {
-	        implementation 'com.github.yangfeng1994:dialogManager:1.0.1'
+	        implementation 'com.github.yangfeng1994:dialogManager:1.0.2'
 	}
 ```
 第三步
